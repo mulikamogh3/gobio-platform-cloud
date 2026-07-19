@@ -50,7 +50,15 @@ export default function LiveDashboard() {
   }, [sensorData]); // This triggers every time sensorData changes
 
   if (error) return <div className="p-8 text-xl font-bold text-red-500 flex items-center justify-center h-full">Error connecting to backend API. Is FastAPI running?</div>;
-  if (!sensorData) return <div className="p-8 text-xl font-bold text-blue-400 flex items-center justify-center h-full animate-pulse">Connecting to GoBioAI Pasteurizer...</div>;
+  // Check if the data is empty or hasn't loaded yet
+  if (!sensorData || Object.keys(sensorData).length === 0) {
+    return (
+      <div style={{ padding: "50px", textAlign: "center", color: "white" }}>
+        <h2>🔌 GoBioAI System Online</h2>
+        <p>Waiting for the ESP32 hardware to transmit the first sensor payload...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 max-w-6xl mx-auto animate-in fade-in duration-500 pb-10">

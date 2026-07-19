@@ -25,8 +25,9 @@ def receive_sensor_data(payload: schemas.LiveData, db: Session = Depends(get_db)
         'cooler_on_temperature', 'cooler_off_temperature'
     })
     
-    # 2. Convert the ESP32 UNIX integer timestamp into a real Python DateTime object
-    data_dict['timestamp'] = datetime.fromtimestamp(payload.timestamp)
+    # 2. The timestamp is now auto-parsed into a DateTime object by Pydantic
+    # We just need to handle the case where it might be missing (None)
+    data_dict['timestamp'] = payload.timestamp if payload.timestamp else datetime.utcnow()
 
     # 3. The Magic Trick: **data_dict automatically maps all 30 remaining fields into the database!
     new_data = models.SensorData(**data_dict)
@@ -45,7 +46,7 @@ def get_live_data(db: Session = Depends(get_db)):
     latest_data = db.query(models.SensorData).order_by(models.SensorData.id.desc()).first()
     
     if not latest_data:
-        raise HTTPException(status_code=404, detail="No sensor data found in the vault.")
+        return {}
         
     # 2. Dynamically grab ALL 37 columns from the database row
     live_dict = {column.name: getattr(latest_data, column.name) for column in latest_data.__table__.columns}
